@@ -17,7 +17,7 @@ Whenever you **create** or **delete** a claim or cover:
 3. The service **publishes an event** (like `ClaimDeletedEvent`).  
 4. A **background worker** (`QueuedHostedService`) picks up the event and writes an **audit record**.  
 
-> This ensures that the API is **fast**, **scalable**, and **non-blocking**.
+ This ensures that the API is **fast**, **scalable**, and **non-blocking**.
 
 ---
 
@@ -82,14 +82,14 @@ Premiums are calculated based on **CoverType** and coverage duration.
 
 ### Deleting a Claim
 
-1. Send DELETE `/api/claims/{id}` with a GUID.  
+1. Send DELETE `/claims/{id}` with a GUID.  
 2. Service deletes the claim and publishes `ClaimDeletedEvent`.  
 3. Background queue handles the event asynchronously and saves an audit record.  
 4. API immediately returns `204 No Content`.
 
 ### Retrieving Claims
 
-- GET `/api/claims` returns all claims.
+- GET `/claims` returns all claims.
 
 ---
 
