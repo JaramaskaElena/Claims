@@ -91,15 +91,3 @@ Premiums are calculated based on **CoverType** and coverage duration.
 
 - GET `/claims` returns all claims.
 
----
-
-## Testing
-
-- Use **Postman** or any HTTP client.  
-- DELETE requests **don’t require a body** — just the GUID.  
-- Verify the audit record:
-
-```sql
-SELECT *
-FROM ClaimAudit
-WHERE ClaimId = 'your-guid-here';
