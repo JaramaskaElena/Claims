@@ -4,7 +4,7 @@ This is a small API for managing **Claims** and **Covers** in an insurance syste
 
 It is designed to be **simple, clear, and easy to understand**, while demonstrating **event-driven architecture** with a **layered design**. Controllers don’t handle business logic directly, and all important operations are logged asynchronously.
 
-> Bonus: This architecture can be easily extended to **microservices**, using **Azure Service Bus** for communication between services.
+ This architecture can be easily extended to **microservices**, using **Azure Service Bus** for communication between services.
 
 ---
 
