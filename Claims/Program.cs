@@ -1,3 +1,4 @@
+using Claims;
 using Claims.Application.Interfaces;
 using Claims.Application.Services;
 using Claims.Domain.Events;
@@ -45,6 +46,6 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
+app.UseMiddleware<ValidationMiddleware>();
 app.MapControllers();
-
 app.Run();

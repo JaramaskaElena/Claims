@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 //using MongoDB.EntityFrameworkCore.Extensions;
 
-
 namespace Claims.Infrastructure.Data
 {
     public class ClaimsContext : DbContext

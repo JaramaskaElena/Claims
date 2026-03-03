@@ -1,4 +1,7 @@
-﻿namespace Claims.Infrastructure.Queue
+﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+
+namespace Claims.Infrastructure.Queue
 {
     public class QueuedHostedService : BackgroundService
     {

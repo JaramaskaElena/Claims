@@ -1,4 +1,5 @@
 ﻿using Claims.Application.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Claims.Infrastructure.Events
 {

@@ -2,6 +2,7 @@
 using Claims.Domain.Entities;
 using Claims.Domain.Events;
 using Claims.Infrastructure.Queue;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Claims.Infrastructure.Handlers
 {

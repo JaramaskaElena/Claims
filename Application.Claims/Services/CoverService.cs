@@ -2,6 +2,7 @@
 using Claims.Domain.Entities;
 using Claims.Domain.Enums;
 using Claims.Domain.Events;
+using System.ComponentModel.DataAnnotations;
 
 namespace Claims.Application.Services
 {
@@ -18,15 +19,7 @@ namespace Claims.Application.Services
 
         public async Task<Cover> CreateAsync(Cover cover)
         {
-            // Validate StartDate
-            if (cover.StartDate < DateTime.UtcNow.Date)
-                throw new ArgumentException("StartDate cannot be in the past");
-
-            // Validate total insurance period
-            if ((cover.EndDate - cover.StartDate).TotalDays > 365)
-                throw new ArgumentException("Insurance period cannot exceed 1 year");
-
-            // Set default fields
+            Validate(cover);
             cover.Id = Guid.NewGuid();
             cover.Premium = ComputePremium(cover.StartDate, cover.EndDate, cover.Type);
 
@@ -109,6 +102,16 @@ namespace Claims.Application.Services
 
             // Total premium
             return premiumFirst + premiumSecond + premiumThird;
+        }
+        public void Validate(Cover cover)
+        {
+            // StartDate cannot be in the past
+            if (cover.StartDate < DateTime.UtcNow)
+                throw new ValidationException("Cover StartDate cannot be in the past");
+
+            // Total insurance period cannot exceed 1 year
+            if ((cover.EndDate - cover.StartDate).TotalDays > 365)
+                throw new ValidationException("Total insurance period cannot exceed 1 year");
         }
     }
 }

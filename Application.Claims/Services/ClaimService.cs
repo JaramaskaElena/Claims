@@ -1,6 +1,7 @@
 ﻿using Claims.Application.Interfaces;
 using Claims.Domain.Entities;
 using Claims.Domain.Events;
+using System.ComponentModel.DataAnnotations;
 
 namespace Claims.Application.Services
 {
@@ -19,19 +20,7 @@ namespace Claims.Application.Services
 
         public async Task<Claim> CreateAsync(Claim claim)
         {
-            if (claim.DamageCost > 100_000)
-                throw new ArgumentException("DamageCost cannot exceed 100,000");
-
-            // Validate related Cover exists
-            var cover = await _coverRepo.GetCoverAsync(claim.CoverId);
-            if (cover == null)
-                throw new ArgumentException("Related cover does not exist");
-
-            // Validate Claim.Created within Cover period
-            var now = DateTime.UtcNow;
-            if (now < cover.StartDate || now > cover.EndDate)
-                throw new ArgumentException("Claim date must be within cover period");
-
+            await ValidateAsync(claim);
 
             claim.Id = Guid.NewGuid();
             claim.Created = DateTime.UtcNow;
@@ -56,6 +45,18 @@ namespace Claims.Application.Services
         public async Task<IEnumerable<Claim>> GetAllAsync()
         {
            return await _claimRepo.GetClaimsAsync();
+        }
+        public async Task ValidateAsync(Claim claim)
+        {
+            if (claim.DamageCost > 100_000)
+                throw new ValidationException("DamageCost cannot exceed 100,000");
+
+            var cover = await _coverRepo.GetCoverAsync(claim.CoverId);
+            if (cover == null)
+                throw new ValidationException("Related cover does not exist");
+
+            if (claim.Created < cover.StartDate || claim.Created > cover.EndDate)
+                throw new ValidationException("Claim date must be within cover period");
         }
     }
 }

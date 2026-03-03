@@ -23,18 +23,18 @@ namespace Claims.Test
         [InlineData(200, CoverType.Tanker)]
         public async Task ComputePremium_Should_Return_Positive_Premium(int days, CoverType type)
         {
-            // Arrange
+            // Fixed future date
+            var now = DateTime.UtcNow.AddMinutes(1);
+
             var cover = new Cover
             {
-                StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow.AddDays(days),
+                StartDate = now,
+                EndDate = now.AddDays(days),
                 Type = type
             };
 
-            // Act
             var result = await _service.CreateAsync(cover);
 
-            // Assert
             Assert.NotEqual(Guid.Empty, result.Id);
             Assert.True(result.Premium > 0, $"Expected positive premium for {type} with {days} days.");
         }
@@ -42,10 +42,12 @@ namespace Claims.Test
         [Fact]
         public async Task ComputePremium_Should_Handle_Zero_Days()
         {
+            var now = DateTime.UtcNow.AddMinutes(1);
+
             var cover = new Cover
             {
-                StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow, // 0 days
+                StartDate = now,
+                EndDate = now, // 0 days
                 Type = CoverType.Yacht
             };
 
@@ -57,16 +59,17 @@ namespace Claims.Test
         [Fact]
         public async Task ComputePremium_Should_Apply_Discounts_Correctly()
         {
+            var now = DateTime.UtcNow.AddMinutes(1);
+
             var cover = new Cover
             {
-                StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow.AddDays(200), // long period to test 2nd & 3rd period discount
+                StartDate = now,
+                EndDate = now.AddDays(200), // long period to test 2nd & 3rd period discount
                 Type = CoverType.Yacht
             };
 
             var result = await _service.CreateAsync(cover);
 
-            // Premium should be higher than just 200 * baseRate
             const decimal baseRate = 1250m;
             Assert.True(result.Premium > 200 * baseRate, "Premium should include multipliers and discounts.");
         }

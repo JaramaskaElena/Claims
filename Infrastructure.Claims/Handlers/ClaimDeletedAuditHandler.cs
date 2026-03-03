@@ -2,15 +2,16 @@
 using Claims.Domain.Entities;
 using Claims.Domain.Events;
 using Claims.Infrastructure.Queue;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Claims.Infrastructure.Handlers
 {
-    public class ClaimCreatedAuditHandler : IEventHandler<ClaimCreatedEvent>
+    public class ClaimDeletedAuditHandler : IEventHandler<ClaimDeletedEvent>
     {
         private readonly IBackgroundQueue _queue;
         private readonly IServiceScopeFactory _scopeFactory;
 
-        public ClaimCreatedAuditHandler(
+        public ClaimDeletedAuditHandler(
             IBackgroundQueue queue,
             IServiceScopeFactory scopeFactory)
         {
@@ -18,7 +19,7 @@ namespace Claims.Infrastructure.Handlers
             _scopeFactory = scopeFactory;
         }
 
-        public Task HandleAsync(ClaimCreatedEvent @event)
+        public Task HandleAsync(ClaimDeletedEvent @event)
         {
             _queue.Enqueue(async token =>
             {
@@ -27,8 +28,8 @@ namespace Claims.Infrastructure.Handlers
 
                 await auditRepo.AddClaimAuditAsync(new ClaimAudit
                 {
-                    ClaimId = @event.Claim.Id,
-                    HttpRequestType = "CREATE",
+                    ClaimId = @event.ClaimId,
+                    HttpRequestType = "DELETE",
                     Created = DateTime.UtcNow
                 });
             });

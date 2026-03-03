@@ -4,6 +4,7 @@ using Claims.Domain.Entities;
 using Claims.Domain.Enums;
 using Claims.Domain.Events;
 using Moq;
+using System.ComponentModel.DataAnnotations;
 
 namespace Claims.Test
 {
@@ -21,10 +22,12 @@ namespace Claims.Test
         public async Task CreateAsync_Should_SetId_ComputePremium_And_Dispatch_Event()
         {
             // Arrange
+            var future = DateTime.UtcNow.AddMinutes(1);
+
             var cover = new Cover
             {
-                StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow.AddDays(10),
+                StartDate = future, // future date
+                EndDate = future.AddDays(10),
                 Type = CoverType.Yacht
             };
 
@@ -58,29 +61,33 @@ namespace Claims.Test
         {
             var cover = new Cover
             {
-                StartDate = DateTime.UtcNow.AddDays(-1),
+                StartDate = DateTime.UtcNow.AddDays(-1), // past
                 EndDate = DateTime.UtcNow.AddDays(10),
                 Type = CoverType.Yacht
             };
 
             var service = CreateService();
 
-            await Assert.ThrowsAsync<ArgumentException>(() => service.CreateAsync(cover));
+            var ex = await Assert.ThrowsAsync<ValidationException>(() => service.CreateAsync(cover));
+            Assert.Equal("Cover StartDate cannot be in the past", ex.Message);
         }
 
         [Fact]
         public async Task CreateAsync_Should_Throw_When_Period_TooLong()
         {
+            var future = DateTime.UtcNow.AddMinutes(1);
+
             var cover = new Cover
             {
-                StartDate = DateTime.UtcNow,
-                EndDate = DateTime.UtcNow.AddDays(366),
+                StartDate = future, // future date
+                EndDate = future.AddDays(366), // > 1 year
                 Type = CoverType.Yacht
             };
 
             var service = CreateService();
 
-            await Assert.ThrowsAsync<ArgumentException>(() => service.CreateAsync(cover));
+            var ex = await Assert.ThrowsAsync<ValidationException>(() => service.CreateAsync(cover));
+            Assert.Equal("Total insurance period cannot exceed 1 year", ex.Message);
         }
     }
 }
