@@ -10,6 +10,9 @@ namespace Claims.Application.Services
     {
         private readonly ICoverRepository _coverRepo;
         private readonly IEventDispatcher _dispatcher;
+        private const decimal BaseRate = 1250m;
+        private const int FirstPeriodDays = 30;
+        private const int SecondPeriodDays = 150;
 
         public CoverService(ICoverRepository coverRepo, IEventDispatcher dispatcher)
         {
@@ -47,60 +50,18 @@ namespace Claims.Application.Services
 
         private decimal ComputePremium(DateTime startDate, DateTime endDate, CoverType coverType)
         {
-            const decimal baseRate = 1250m;
+            int totalDays = Math.Max((endDate - startDate).Days, 0);
 
-            decimal typeMultiplier;
-            switch (coverType)
-            {
-                case CoverType.Yacht:
-                    typeMultiplier = 1.10m;
-                    break;
-                case CoverType.PassengerShip:
-                    typeMultiplier = 1.20m;
-                    break;
-                case CoverType.Tanker:
-                    typeMultiplier = 1.50m;
-                    break;
-                default:
-                    typeMultiplier = 1.30m;
-                    break;
-            }
+            decimal multiplier = GetTypeMultiplier(coverType);
 
-            // Calculate total days
-            int totalDays = (int)(endDate - startDate).TotalDays;
-            totalDays = Math.Max(totalDays, 0);
+            int firstPeriod = Math.Min(totalDays, FirstPeriodDays);
+            int secondPeriod = Math.Min(Math.Max(totalDays - FirstPeriodDays, 0), SecondPeriodDays);
+            int thirdPeriod = Math.Max(totalDays - FirstPeriodDays - SecondPeriodDays, 0);
 
-            // First period: up to 30 days
-            int firstPeriod = Math.Min(totalDays, 30);
-            decimal premiumFirst = firstPeriod * baseRate * typeMultiplier;
+            decimal premiumFirst = firstPeriod * BaseRate * multiplier;
+            decimal premiumSecond = secondPeriod * BaseRate * multiplier * GetSecondDiscount(coverType);
+            decimal premiumThird = thirdPeriod * BaseRate * multiplier * GetThirdDiscount(coverType);
 
-            // Second period: days 31 to 180 (max 150 days)
-            int secondPeriod = Math.Min(Math.Max(totalDays - 30, 0), 150);
-            decimal secondDiscount;
-            if (coverType == CoverType.Yacht)
-            {
-                secondDiscount = 0.95m;
-            }
-            else
-            {
-                secondDiscount = 0.98m;
-            }
-            decimal premiumSecond = secondPeriod * baseRate * typeMultiplier * secondDiscount;
-
-            // Third period: days after 180
-            int thirdPeriod = Math.Max(totalDays - 180, 0);
-            decimal thirdDiscount;
-            if (coverType == CoverType.Yacht)
-            {
-                thirdDiscount = 0.97m;
-            }
-            else
-            {
-                thirdDiscount = 0.99m;
-            }
-            decimal premiumThird = thirdPeriod * baseRate * typeMultiplier * thirdDiscount;
-
-            // Total premium
             return premiumFirst + premiumSecond + premiumThird;
         }
         public void Validate(Cover cover)
@@ -112,6 +73,41 @@ namespace Claims.Application.Services
             // Total insurance period cannot exceed 1 year
             if ((cover.EndDate - cover.StartDate).TotalDays > 365)
                 throw new ValidationException("Total insurance period cannot exceed 1 year");
+        }
+        private decimal GetTypeMultiplier(CoverType coverType)
+        {
+            decimal multiplier;
+
+            switch (coverType)
+            {
+                case CoverType.Yacht:
+                    multiplier = 1.10m;
+                    break;
+
+                case CoverType.PassengerShip:
+                    multiplier = 1.20m;
+                    break;
+
+                case CoverType.Tanker:
+                    multiplier = 1.50m;
+                    break;
+
+                default:
+                    multiplier = 1.30m;
+                    break;
+            }
+
+            return multiplier;
+        }
+
+        private decimal GetSecondDiscount(CoverType coverType)
+        {
+            return coverType == CoverType.Yacht ? 0.95m : 0.98m;
+        }
+
+        private decimal GetThirdDiscount(CoverType coverType)
+        {
+            return coverType == CoverType.Yacht ? 0.97m : 0.99m;
         }
     }
 }
