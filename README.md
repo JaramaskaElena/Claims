@@ -1,93 +1,39 @@
-# Insurance API
+# Claims API
 
-This is a small API for managing **Claims** and **Covers** in an insurance system.  
+This project implements a **Claims Management API** using a **layered (clean) architecture** and follows **SOLID principles** for maintainability, testability, and separation of concerns.
 
-It is designed to be **simple, clear, and easy to understand**, while demonstrating **event-driven architecture** with a **layered design**. Controllers don’t handle business logic directly, and all important operations are logged asynchronously.
+## Architecture
 
- This architecture can be easily extended to **microservices**, using **Azure Service Bus** for communication between services.
+The solution is divided into multiple projects/layers:
 
----
+- **Claims.API (Presentation Layer)** – Contains the controllers and handles HTTP requests/responses.
+- **Claims.Application (Application/Services Layer)** – Implements business logic and application services.
+- **Claims.Domain (Domain Layer)** – Contains entities, enums, and domain events.
+- **Claims.Infrastructure (Infrastructure Layer)** – Handles data access (repositories, EF Core) and integration with external services.
 
-## How It Works
+This separation ensures that each layer has a **single responsibility** and can evolve independently.
 
-Whenever you **create** or **delete** a claim or cover:
+## Event-Driven Architecture
 
-1. You call the API (like DELETE `/api/claims/{id}`).  
-2. The **service layer** deletes the claim or cover.  
-3. The service **publishes an event** (like `ClaimDeletedEvent`).  
-4. A **background worker** (`QueuedHostedService`) picks up the event and writes an **audit record**.  
+The API uses an **event-driven approach**:
 
- This ensures that the API is **fast**, **scalable**, and **non-blocking**.
+- Each significant action (e.g., ClaimCreated, CoverCreated) triggers a **domain event**.
+- Events are dispatched asynchronously via an `IEventDispatcher` to prevent **blocking the main workflow**.
+- This allows the system to scale and react to changes without waiting for long-running tasks, improving responsiveness and decoupling components.
 
----
+## Validation & Middleware
 
-## Architecture Overview
+- All business validation is handled inside the **Application layer** (e.g., validating `DamageCost`, cover period, or insurance limits).
+- Exceptions and validation errors are handled globally by a **custom middleware** in the API:
+  - Ensures consistent **HTTP response codes** for errors.
+  - Centralizes exception handling so controllers remain clean and focused on handling requests.
 
+## Other Highlights
 
-[Controller] → [Service] → [Event Dispatcher] → [Background Queue] → [Audit Repository]
+- **SOLID Principles**: Each layer and class adheres to single responsibility, open/closed, and dependency inversion principles.
+- **Unit Tests**: Services are fully tested, including validation rules and premium calculations.
+- **EF Core Code-First**: Database is managed with migrations, supporting a flexible and maintainable schema.
+- **Deterministic Tests**: Date-related logic is tested reliably to prevent flakiness in CI pipelines.
 
-
-- **Controllers** handle HTTP requests.  
-- **Services** contain business logic.  
-- **Event Dispatcher** publishes domain events.  
-- **Background Queue** picks up events asynchronously.  
-- **Audit Repository** saves audit logs to the database.  
-
-> In a **microservice setup**, the event dispatcher could push messages to **Azure Service Bus**, allowing multiple services to subscribe to the events without changing this API code.
-
----
-
-## Endpoints
-
-### Claims
-
-- **GET /api/claims** – Returns all claims.  
-- **DELETE /api/claims/{id}** – Deletes a claim by GUID and fires an event processed asynchronously.
-
-### Covers
-
-- **GET /api/covers** – Returns all covers.  
-- **DELETE /api/covers/{id}** – Deletes a cover by GUID and logs the deletion asynchronously.
-
----
-
-## Premium Calculation
-
-Premiums are calculated based on **CoverType** and coverage duration.  
-
-- Base rate: 1250 units/day  
-
-**Type multiplier:**
-
-| CoverType        | Multiplier |
-|-----------------|------------|
-| Yacht           | 1.10       |
-| PassengerShip   | 1.20       |
-| Tanker          | 1.50       |
-| Other           | 1.30       |
-
-**Coverage periods and discounts:**
-
-| Period        | Days       | Discount | Notes                           |
-|---------------|------------|----------|---------------------------------|
-| First Period  | 0–30       | None     | Standard calculation             |
-| Second Period | 31–180     | 5% (Yacht), 2% (Other) | Encourages longer coverage |
-| Third Period  | 181+       | 3% (Yacht), 1% (Other) | Minor discount for long coverage |
-
-> Calculated in the service layer and easily testable independently.
-
----
-
-## Example Usage
-
-### Deleting a Claim
-
-1. Send DELETE `/claims/{id}` with a GUID.  
-2. Service deletes the claim and publishes `ClaimDeletedEvent`.  
-3. Background queue handles the event asynchronously and saves an audit record.  
-4. API immediately returns `204 No Content`.
-
-### Retrieving Claims
-
-- GET `/claims` returns all claims.
+This architecture ensures a **maintainable, scalable, and responsive system**, following best practices for modern .NET applications.
 
