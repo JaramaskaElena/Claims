@@ -22,9 +22,13 @@ namespace Claims.Presentation.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<Claim> Get(Guid id)
+        public async Task<ActionResult<Claim>> Get(Guid id)
         {
-            return await _claimService.GetAsync(id);
+            var claim = await _claimService.GetAsync(id);
+           if (claim == null)
+             return NotFound();
+
+            return Ok(claim);
         }
 
         [HttpPost]

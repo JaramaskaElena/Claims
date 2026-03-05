@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Claims.Domain", "Claims.Dom
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Claims.Application", "Application.Claims\Claims.Application.csproj", "{8D4315EB-2D99-44C9-AC57-6B196C41A470}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Claims.Infarstructure", "Infrastructure.Claims\Claims.Infarstructure.csproj", "{CF77225B-F58A-4121-AAFD-2DC7627C17E9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Claims.Infrastructure", "Infrastructure.Claims\Claims.Infrastructure.csproj", "{CF77225B-F58A-4121-AAFD-2DC7627C17E9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

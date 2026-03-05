@@ -20,10 +20,11 @@ namespace Claims.Application.Services
 
         public async Task<Claim> CreateAsync(Claim claim)
         {
-            await ValidateAsync(claim);
+            var now = DateTime.UtcNow;
+            await ValidateAsync(claim, now);
 
             claim.Id = Guid.NewGuid();
-            claim.Created = DateTime.UtcNow;
+            claim.Created = now;
 
             await _claimRepo.AddAsync(claim);
             await _dispatcher.DispatchAsync(new ClaimCreatedEvent(claim));
@@ -46,8 +47,11 @@ namespace Claims.Application.Services
         {
            return await _claimRepo.GetClaimsAsync();
         }
-        public async Task ValidateAsync(Claim claim)
+        private async Task ValidateAsync(Claim claim, DateTime now)
         {
+            if (string.IsNullOrWhiteSpace(claim.Name))
+                throw new InvalidOperationException("Claim Name is required.");
+
             if (claim.DamageCost > 100_000)
                 throw new ValidationException("DamageCost cannot exceed 100,000");
 
@@ -55,7 +59,7 @@ namespace Claims.Application.Services
             if (cover == null)
                 throw new ValidationException("Related cover does not exist");
 
-            if (claim.Created < cover.StartDate || claim.Created > cover.EndDate)
+            if (now < cover.StartDate || now > cover.EndDate)
                 throw new ValidationException("Claim date must be within cover period");
         }
     }
