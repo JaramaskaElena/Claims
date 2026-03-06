@@ -45,15 +45,25 @@ namespace Claims.Test
         }
 
         [Fact]
-        public async Task DeleteAsync_Should_Call_Delete_And_Dispatch_Event()
+        public async Task DeleteAsync_Should_Delete_Cover_And_ReturnTrue_WhenExists()
         {
+            // Arrange
             var id = Guid.NewGuid();
+
+            // Setup repository за да враќа постоечки cover
+            _repo.Setup(r => r.GetCoverAsync(id))
+                 .ReturnsAsync(new Cover { Id = id });
+
             var service = CreateService();
 
-            await service.DeleteAsync(id);
+            // Act
+            var result = await service.DeleteAsync(id);
+
+            // Assert
+            Assert.True(result);
 
             _repo.Verify(r => r.DeleteAsync(id), Times.Once);
-            _dispatcher.Verify(d => d.DispatchAsync(It.IsAny<CoverDeletedEvent>()), Times.Once);
+            _dispatcher.Verify(d => d.DispatchAsync(It.Is<CoverDeletedEvent>(e => e.CoverId == id)), Times.Once);
         }
 
         [Fact]
@@ -88,6 +98,70 @@ namespace Claims.Test
 
             var ex = await Assert.ThrowsAsync<ValidationException>(() => service.CreateAsync(cover));
             Assert.Equal("Total insurance period cannot exceed 1 year", ex.Message);
+        }
+        [Fact]
+        public async Task GetAsync_Should_Return_Cover()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+
+            var cover = new Cover
+            {
+                Id = id,
+                StartDate = DateTime.UtcNow.AddDays(1),
+                EndDate = DateTime.UtcNow.AddDays(10),
+                Type = CoverType.Yacht
+            };
+
+            _repo.Setup(r => r.GetCoverAsync(id))
+                 .ReturnsAsync(cover);
+
+            var service = CreateService();
+
+            // Act
+            var result = await service.GetAsync(id);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(id, result.Id);
+
+            _repo.Verify(r => r.GetCoverAsync(id), Times.Once);
+        }
+        [Fact]
+        public async Task GetAllAsync_Should_Return_All_Covers()
+        {
+            // Arrange
+            var covers = new List<Cover>
+    {
+        new Cover
+        {
+            Id = Guid.NewGuid(),
+            StartDate = DateTime.UtcNow.AddDays(1),
+            EndDate = DateTime.UtcNow.AddDays(10),
+            Type = CoverType.Yacht
+        },
+        new Cover
+        {
+            Id = Guid.NewGuid(),
+            StartDate = DateTime.UtcNow.AddDays(2),
+            EndDate = DateTime.UtcNow.AddDays(20),
+            Type = CoverType.Tanker
+        }
+    };
+
+            _repo.Setup(r => r.GetCoversAsync())
+                 .ReturnsAsync(covers);
+
+            var service = CreateService();
+
+            // Act
+            var result = await service.GetAllAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count());
+
+            _repo.Verify(r => r.GetCoversAsync(), Times.Once);
         }
     }
 }

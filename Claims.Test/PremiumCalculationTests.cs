@@ -47,7 +47,7 @@ namespace Claims.Test
             var cover = new Cover
             {
                 StartDate = now,
-                EndDate = now, // 0 days
+                EndDate = now,
                 Type = CoverType.Yacht
             };
 

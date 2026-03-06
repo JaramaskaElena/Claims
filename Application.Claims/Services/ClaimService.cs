@@ -32,10 +32,15 @@ namespace Claims.Application.Services
             return claim;
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task<bool> DeleteAsync(Guid id)
         {
+            var claim = await _claimRepo.GetClaimAsync(id);
+            if (claim == null)
+                return false;
+
             await _claimRepo.DeleteAsync(id);
             await _dispatcher.DispatchAsync(new ClaimDeletedEvent(id));
+            return true;
         }
 
         public async Task<Claim> GetAsync(Guid id)

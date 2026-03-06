@@ -32,10 +32,15 @@ namespace Claims.Application.Services
             return cover;
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task<bool> DeleteAsync(Guid id)
         {
+            var cover = await _coverRepo.GetCoverAsync(id);
+            if (cover == null)
+                return false;
+
             await _coverRepo.DeleteAsync(id);
             await _dispatcher.DispatchAsync(new CoverDeletedEvent(id));
+            return true;
         }
 
         public async Task<Cover> GetAsync(Guid id)

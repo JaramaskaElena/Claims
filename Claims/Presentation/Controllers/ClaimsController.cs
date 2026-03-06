@@ -41,7 +41,11 @@ namespace Claims.Presentation.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _claimService.DeleteAsync(id);
+            var deleted = await _claimService.DeleteAsync(id);
+
+            if (!deleted)
+                return NotFound();
+
             return NoContent();
         }
     }

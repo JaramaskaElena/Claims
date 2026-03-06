@@ -5,7 +5,7 @@ namespace Claims.Application.Interfaces
     public interface IClaimService
     {
         Task<Claim> CreateAsync(Claim claim);
-        Task DeleteAsync(Guid id);
+        Task<bool> DeleteAsync(Guid id);
         Task<Claim> GetAsync(Guid id);
         Task<IEnumerable<Claim>> GetAllAsync();
     }

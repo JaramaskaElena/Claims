@@ -44,7 +44,8 @@ namespace Claims.Test
             {
                 CoverId = cover.Id,
                 DamageCost = 5000,
-                Created = DateTime.UtcNow
+                Created = DateTime.UtcNow,
+                Name = "Test"
             };
 
             var service = CreateService();
@@ -68,7 +69,8 @@ namespace Claims.Test
             {
                 CoverId = Guid.NewGuid(),
                 DamageCost = 200_000,
-                Created = DateTime.UtcNow
+                Created = DateTime.UtcNow,
+                Name = "Test"
             };
 
             var service = CreateService();
@@ -88,7 +90,8 @@ namespace Claims.Test
             {
                 CoverId = Guid.NewGuid(),
                 DamageCost = 5000,
-                Created = DateTime.UtcNow
+                Created = DateTime.UtcNow,
+                Name = "Test"
             };
 
             var service = CreateService();
@@ -116,7 +119,8 @@ namespace Claims.Test
             {
                 CoverId = cover.Id,
                 DamageCost = 5000,
-                Created = DateTime.UtcNow // before cover start date
+                Created = DateTime.UtcNow, // before cover start date
+                Name ="Test"
             };
 
             var service = CreateService();
@@ -124,6 +128,75 @@ namespace Claims.Test
             // Act & Assert
             var ex = await Assert.ThrowsAsync<ValidationException>(() => service.CreateAsync(claim));
             Assert.Equal("Claim date must be within cover period", ex.Message);
+        }
+        [Fact]
+        public async Task DeleteAsync_Should_Delete_Claim_And_ReturnTrue_WhenExists()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+
+            _claimRepo.Setup(r => r.GetClaimAsync(id))
+                      .ReturnsAsync(new Claim { Id = id });
+
+            var service = CreateService();
+
+            // Act
+            var result = await service.DeleteAsync(id);
+
+            // Assert
+            Assert.True(result);
+
+            _claimRepo.Verify(r => r.DeleteAsync(id), Times.Once);
+            _dispatcher.Verify(
+                d => d.DispatchAsync(It.Is<ClaimDeletedEvent>(e => e.ClaimId == id)),
+                Times.Once);
+        }
+        [Fact]
+        public async Task GetAsync_Should_Return_Claim()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+
+            var claim = new Claim
+            {
+                Id = id,
+                Name = "Test",
+                DamageCost = 5000
+            };
+
+            _claimRepo.Setup(r => r.GetClaimAsync(id))
+                      .ReturnsAsync(claim);
+
+            var service = CreateService();
+
+            // Act
+            var result = await service.GetAsync(id);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(id, result.Id);
+        }
+        [Fact]
+        public async Task GetAllAsync_Should_Return_All_Claims()
+        {
+            // Arrange
+            var claims = new List<Claim>
+    {
+        new Claim { Id = Guid.NewGuid(), Name = "Claim1", DamageCost = 1000 },
+        new Claim { Id = Guid.NewGuid(), Name = "Claim2", DamageCost = 2000 }
+    };
+
+            _claimRepo.Setup(r => r.GetClaimsAsync())
+                      .ReturnsAsync(claims);
+
+            var service = CreateService();
+
+            // Act
+            var result = await service.GetAllAsync();
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count());
         }
     }
 }
